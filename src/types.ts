@@ -6,6 +6,8 @@ export type TerrainType = 'plano' | 'ondulado' | 'montanoso';
 
 export type CameraPreset = 'aerea' | 'planta' | 'calle';
 
+export type RenderQuality = 'baja' | 'media' | 'alta';
+
 export interface WorldParams {
   // Generación matemática
   seed: number;
@@ -28,9 +30,14 @@ export interface WorldParams {
   lotZ: number;             // Posición Z en el plano
 
   // Visualización y ambiente
-  hourOfDay: number;        // 6 - 18 h (def: 15)
+  hourOfDay: number;        // 0 - 24 h (def: 15)
   showWater: boolean;       // def: true
   showLotVolume: boolean;   // def: true
+
+  // Mejoras arquitectónicas y gráficas
+  quality: RenderQuality;   // 'baja' | 'media' | 'alta'
+  contextMode: boolean;     // Atenuar edificios vecinos alrededor del lote
+  shadowStudy: boolean;     // Resaltar sombras proyectadas por el lote
 }
 
 export interface BuildingData {

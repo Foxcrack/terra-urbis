@@ -1,11 +1,12 @@
 /**
  * Terra Urbis - Panel lateral de controles y configuración
- * Agrupa los parámetros del mundo, ciudad, lote del proyecto, estudio solar,
+ * Agrupa los parámetros del mundo, ciudad, lote del proyecto, estudio solar 24h,
+ * selector de calidad gráfica, exportación de capturas PNG,
  * botones de cámara, estadísticas e integración con el módulo didáctico.
  */
 
 import React from 'react';
-import { WorldParams, TerrainType, CameraPreset, WorldStats } from '../types';
+import { WorldParams, TerrainType, CameraPreset, WorldStats, RenderQuality } from '../types';
 import { Stats } from './Stats';
 import { LearnPanel } from './LearnPanel';
 import {
@@ -20,6 +21,11 @@ import {
   Square,
   SunMedium,
   Moon,
+  Sparkles,
+  Info,
+  Sunrise,
+  Sunset,
+  Presentation as PresentationIcon,
 } from 'lucide-react';
 
 interface ControlPanelProps {
@@ -30,6 +36,8 @@ interface ControlPanelProps {
   onUpdateParams: (partial: Partial<WorldParams>) => void;
   onSelectCameraPreset: (preset: CameraPreset) => void;
   onRandomSeed: () => void;
+  onCaptureScreenshot: () => void;
+  onOpenPresentation: () => void;
 }
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -40,7 +48,25 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onUpdateParams,
   onSelectCameraPreset,
   onRandomSeed,
+  onCaptureScreenshot,
+  onOpenPresentation,
 }) => {
+  // Formatear texto dinámico de hora
+  const hourInt = Math.floor(params.hourOfDay);
+  const minInt = Math.floor((params.hourOfDay % 1) * 60);
+  const timeFormatted = `${hourInt.toString().padStart(2, '0')}:${minInt.toString().padStart(2, '0')} h`;
+
+  let timePhase = 'Día';
+  if (params.hourOfDay < 5.5 || params.hourOfDay > 19.5) {
+    timePhase = 'Noche (Ventanas ON)';
+  } else if (params.hourOfDay < 8.0) {
+    timePhase = 'Amanecer';
+  } else if (params.hourOfDay > 16.5) {
+    timePhase = 'Atardecer';
+  } else {
+    timePhase = 'Mediodía';
+  }
+
   return (
     <aside className="control-sidebar" aria-label="Panel de configuración de Terra Urbis">
       {/* Encabezado de la aplicación */}
@@ -49,23 +75,76 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <div className="brand-badge">🏙️</div>
           <div>
             <h1 className="brand-title">Terra Urbis</h1>
-            <p className="brand-subtitle">Generador de terrenos y ciudades</p>
+            <p className="brand-subtitle">Visualización y Ciudad Procedural</p>
           </div>
         </div>
-        <button
-          className="theme-toggle-btn"
-          onClick={onToggleTheme}
-          title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-          aria-label="Alternar tema de interfaz"
-        >
-          {theme === 'dark' ? <SunMedium size={18} /> : <Moon size={18} />}
-        </button>
+        <div className="header-actions">
+          <button
+            className="header-presentation-btn"
+            onClick={onOpenPresentation}
+            title="Abrir Presentación del Proyecto (Pantalla completa)"
+            aria-label="Abrir Presentación del Proyecto"
+          >
+            <PresentationIcon size={16} />
+            <span>Presentación</span>
+          </button>
+          <button
+            className="header-icon-btn screenshot-btn"
+            onClick={onCaptureScreenshot}
+            title="Capturar imagen PNG de la vista actual"
+            aria-label="Capturar imagen PNG"
+          >
+            <Camera size={16} />
+          </button>
+          <button
+            className="header-icon-btn theme-toggle-btn"
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            aria-label="Alternar tema de interfaz"
+          >
+            {theme === 'dark' ? <SunMedium size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
       </header>
 
       <div className="sidebar-scrollable-content">
         {/* Panel de Estadísticas */}
         <section className="control-section stats-section">
           <Stats stats={stats} />
+        </section>
+
+        {/* Selector de Calidad Gráfica */}
+        <section className="control-section">
+          <div className="section-title">
+            <Sparkles size={16} />
+            <span>Calidad Gráfica</span>
+            <span
+              className="tooltip-badge"
+              title="Ajusta la resolución de sombras y el postprocesado: Baja (sin postprocesado para móviles 60fps), Media (Bloom + Árboles + FXAA) y Alta (Oclusión Ambiental GTAO + Sombras 2048px)."
+            >
+              <Info size={13} />
+            </span>
+          </div>
+          <div className="segmented-control quality-control">
+            {(['baja', 'media', 'alta'] as RenderQuality[]).map((q) => (
+              <button
+                key={q}
+                className={`segment-btn ${params.quality === q ? 'active' : ''}`}
+                onClick={() => onUpdateParams({ quality: q })}
+                title={
+                  q === 'baja'
+                    ? 'Baja: Direct WebGL para móviles y bajo consumo (60 FPS)'
+                    : q === 'media'
+                    ? 'Media: Bloom nocturno sutil, árboles y antialiasing FXAA'
+                    : 'Alta: Oclusión Ambiental GTAO, sombras HD 2048 y máxima vegetación'
+                }
+              >
+                {q === 'baja' && 'Baja'}
+                {q === 'media' && 'Media'}
+                {q === 'alta' && 'Alta'}
+              </button>
+            ))}
+          </div>
         </section>
 
         {/* Módulo Didáctico "Aprende" */}
@@ -78,12 +157,18 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <div className="section-title">
             <Camera size={16} />
             <span>Vistas de Cámara</span>
+            <span
+              className="tooltip-badge"
+              title="Transición cinemática amortiguada hacia posiciones canónicas arquitectónicas: Aérea (isométrica), Planta (cenital ortogonal) o Calle (nivel de observador peatonal)."
+            >
+              <Info size={13} />
+            </span>
           </div>
           <div className="camera-btn-group">
             <button
               className="camera-btn"
               onClick={() => onSelectCameraPreset('aerea')}
-              title="Vista isométrica general"
+              title="Vista isométrica general (perspectiva clásica 45°)"
             >
               <Compass size={14} />
               <span>Aérea</span>
@@ -91,7 +176,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <button
               className="camera-btn"
               onClick={() => onSelectCameraPreset('planta')}
-              title="Vista cenital ortogonal"
+              title="Vista cenital de implantación urbana"
             >
               <Layers size={14} />
               <span>Planta</span>
@@ -99,7 +184,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <button
               className="camera-btn"
               onClick={() => onSelectCameraPreset('calle')}
-              title="Vista a nivel peatonal del lote"
+              title="Vista peatonal en rasante hacia el lote del proyecto"
             >
               <Building size={14} />
               <span>Calle</span>
@@ -112,12 +197,24 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <div className="section-title">
             <Layers size={16} />
             <span>Matemáticas y Relieve</span>
+            <span
+              className="tooltip-badge"
+              title="Generación topográfica determinista mediante PRNG Mulberry32, gradiente Perlin y armónicos fractales fBm."
+            >
+              <Info size={13} />
+            </span>
           </div>
 
           {/* Semilla */}
           <div className="control-row seed-row">
             <label htmlFor="seed-input" className="control-label">
-              Semilla (PRNG):
+              <span>Semilla (PRNG):</span>
+              <span
+                className="tooltip-icon"
+                title="Semilla de 32 bits para el generador Mulberry32. La misma semilla garantiza reproducir exactamente el mismo terreno y edificios bit a bit."
+              >
+                <Info size={12} />
+              </span>
             </label>
             <div className="seed-input-container">
               <input
@@ -143,7 +240,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
           {/* Tipo de terreno */}
           <div className="control-row">
-            <label className="control-label">Tipo de terreno:</label>
+            <label className="control-label">
+              <span>Tipo de terreno:</span>
+              <span
+                className="tooltip-icon"
+                title="Plano: cota cero constante. Ondulado: fBm estándar con colinas suaves. Montañoso: Ridged multifractal con crestas afiladas (n = 2n² - 1)."
+              >
+                <Info size={12} />
+              </span>
+            </label>
             <div className="segmented-control">
               {(['plano', 'ondulado', 'montanoso'] as TerrainType[]).map((t) => (
                 <button
@@ -164,7 +269,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <>
               <div className="control-row slider-row">
                 <div className="slider-header">
-                  <label htmlFor="relief-slider">Relieve vertical:</label>
+                  <label htmlFor="relief-slider">
+                    <span>Relieve vertical:</span>
+                    <span
+                      className="tooltip-icon"
+                      title="Amplitud vertical máxima en metros (0 a 60 m). Escala el relieve resultante de la suma fractal."
+                    >
+                      <Info size={12} />
+                    </span>
+                  </label>
                   <span className="slider-value">{params.relief} m</span>
                 </div>
                 <input
@@ -180,7 +293,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
               <div className="control-row slider-row">
                 <div className="slider-header">
-                  <label htmlFor="scale-slider">Escala del terreno:</label>
+                  <label htmlFor="scale-slider">
+                    <span>Escala del terreno:</span>
+                    <span
+                      className="tooltip-icon"
+                      title="Frecuencia espacial del ruido de Perlin (0.006 × escala). Valores bajos generan colinas extendidas; valores altos, topografía densa."
+                    >
+                      <Info size={12} />
+                    </span>
+                  </label>
                   <span className="slider-value">{params.terrainScale.toFixed(2)}x</span>
                 </div>
                 <input
@@ -196,7 +317,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
               <div className="control-row slider-row">
                 <div className="slider-header">
-                  <label htmlFor="octaves-slider">Capas fractales (Octavas):</label>
+                  <label htmlFor="octaves-slider">
+                    <span>Capas fractales (Octavas):</span>
+                    <span
+                      className="tooltip-icon"
+                      title="Número de armónicos fractales superpuestos (1 a 6). Cada octava duplica la frecuencia espacial y reduce la amplitud a la mitad."
+                    >
+                      <Info size={12} />
+                    </span>
+                  </label>
                   <span className="slider-value">{params.octaves}</span>
                 </div>
                 <input
@@ -218,11 +347,25 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <div className="section-title">
             <Building size={16} />
             <span>Trama Urbana y Edificios</span>
+            <span
+              className="tooltip-badge"
+              title="Cuadrícula ortogonal cada 12 m con calles de 4.4 m, calzadas de asfalto y aceras. Variedad visual con 3 tipos de edificios instanciados."
+            >
+              <Info size={13} />
+            </span>
           </div>
 
           <div className="control-row slider-row">
             <div className="slider-header">
-              <label htmlFor="city-radius-slider">Radio de la ciudad:</label>
+              <label htmlFor="city-radius-slider">
+                <span>Radio de la ciudad:</span>
+                <span
+                  className="tooltip-icon"
+                  title="Radio máximo R en metros dentro del cual se generan manzanas urbanas y edificios."
+                >
+                  <Info size={12} />
+                </span>
+              </label>
               <span className="slider-value">{params.cityRadius} m</span>
             </div>
             <input
@@ -238,7 +381,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
           <div className="control-row slider-row">
             <div className="slider-header">
-              <label htmlFor="city-density-slider">Densidad urbana:</label>
+              <label htmlFor="city-density-slider">
+                <span>Densidad urbana:</span>
+                <span
+                  className="tooltip-icon"
+                  title="Probabilidad radial de ocupación: P(d) = densidad × (1 - 0.55 × d/R). Mayor densidad en el núcleo urbano central."
+                >
+                  <Info size={12} />
+                </span>
+              </label>
               <span className="slider-value">{params.cityDensity}%</span>
             </div>
             <input
@@ -254,7 +405,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
           <div className="control-row slider-row">
             <div className="slider-header">
-              <label htmlFor="building-height-slider">Altura máx. edificios:</label>
+              <label htmlFor="building-height-slider">
+                <span>Altura máx. edificios:</span>
+                <span
+                  className="tooltip-icon"
+                  title="Perfil radial de alturas: Altura = alturaMax × (0.15 + 0.85(1 - d/R)^1.5) × factorAleatorio. Produce un skyline cónico natural."
+                >
+                  <Info size={12} />
+                </span>
+              </label>
               <span className="slider-value">{params.maxBuildingHeight} m</span>
             </div>
             <input
@@ -270,7 +429,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
           <div className="control-row slider-row">
             <div className="slider-header">
-              <label htmlFor="urban-leveling-slider">Nivelación urbana:</label>
+              <label htmlFor="urban-leveling-slider">
+                <span>Nivelación urbana:</span>
+                <span
+                  className="tooltip-icon"
+                  title="Grado de explanación topográfica en la ciudad: interpola la cota del terreno hacia la cota central según una máscara smoothstep."
+                >
+                  <Info size={12} />
+                </span>
+              </label>
               <span className="slider-value">{params.urbanLeveling}%</span>
             </div>
             <input
@@ -290,6 +457,12 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <div className="section-title">
             <Box size={16} />
             <span>Lote de Proyecto (Implantación)</span>
+            <span
+              className="tooltip-badge"
+              title="Volumen prisma naranja para análisis de inserción, ocupación de suelo y asoleamiento."
+            >
+              <Info size={13} />
+            </span>
           </div>
 
           <div className="control-row slider-row">
@@ -340,45 +513,105 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             />
           </div>
 
+          {/* Opciones de visualización arquitectónica del lote */}
           <div className="checkbox-row">
             <label className="checkbox-label" onClick={() => onUpdateParams({ showLotVolume: !params.showLotVolume })}>
               {params.showLotVolume ? <CheckSquare size={16} className="checked-icon" /> : <Square size={16} />}
               <span>Mostrar volumen propuesto</span>
             </label>
           </div>
+
+          <div className="checkbox-row">
+            <label className="checkbox-label" onClick={() => onUpdateParams({ contextMode: !params.contextMode })}>
+              {params.contextMode ? <CheckSquare size={16} className="checked-icon" /> : <Square size={16} />}
+              <span>Modo contexto (atenuar edificios vecinos)</span>
+            </label>
+            <span
+              className="tooltip-icon"
+              title="Atenúa a semitransparente los edificios en un radio de 65 m para que el lote destaque claramente aunque esté rodeado de torres."
+            >
+              <Info size={12} />
+            </span>
+          </div>
+
+          <div className="checkbox-row">
+            <label className="checkbox-label" onClick={() => onUpdateParams({ shadowStudy: !params.shadowStudy })}>
+              {params.shadowStudy ? <CheckSquare size={16} className="checked-icon" /> : <Square size={16} />}
+              <span>Estudio de sombras del lote</span>
+            </label>
+            <span
+              className="tooltip-icon"
+              title="Enfatiza el contraste de sombras solares directas para evaluar cómo incide el volumen propuesto sobre las parcelas adyacentes a cada hora."
+            >
+              <Info size={12} />
+            </span>
+          </div>
         </section>
 
-        {/* Sección: Ambiente & Estudio Solar */}
+        {/* Sección: Ambiente & Estudio Solar 24 Horas */}
         <section className="control-section">
           <div className="section-title">
             <Sun size={16} />
-            <span>Ambiente y Estudio Solar</span>
+            <span>Ambiente y Estudio Solar (24 h)</span>
+            <span
+              className="tooltip-badge"
+              title="Ciclo solar y lunar continuo de 0 a 24 horas. De noche (fuera de 6-18h) se encienden las ventanas de los edificios y la iluminación pasa a luz de luna."
+            >
+              <Info size={13} />
+            </span>
           </div>
 
           <div className="control-row slider-row">
             <div className="slider-header">
               <label htmlFor="sun-hour-slider">Hora del día:</label>
               <span className="slider-value sun-hour-badge">
-                {Math.floor(params.hourOfDay).toString().padStart(2, '0')}:
-                {Math.floor((params.hourOfDay % 1) * 60)
-                  .toString()
-                  .padStart(2, '0')}{' '}
-                h
+                {timeFormatted} · {timePhase}
               </span>
             </div>
             <input
               id="sun-hour-slider"
               type="range"
-              min="6"
-              max="18"
+              min="0"
+              max="24"
               step="0.1"
               value={params.hourOfDay}
               onChange={(e) => onUpdateParams({ hourOfDay: parseFloat(e.target.value) })}
             />
-            <div className="sun-range-legend">
-              <span>06:00 (Amanecer)</span>
-              <span>12:00 (Cenit)</span>
-              <span>18:00 (Atardecer)</span>
+
+            {/* Accesos rápidos de hora */}
+            <div className="hour-quick-buttons">
+              <button
+                className={`quick-time-btn ${Math.abs(params.hourOfDay - 7) < 0.5 ? 'active' : ''}`}
+                onClick={() => onUpdateParams({ hourOfDay: 7 })}
+                title="Amanecer (07:00 h)"
+              >
+                <Sunrise size={12} />
+                <span>07:00</span>
+              </button>
+              <button
+                className={`quick-time-btn ${Math.abs(params.hourOfDay - 12) < 0.5 ? 'active' : ''}`}
+                onClick={() => onUpdateParams({ hourOfDay: 12 })}
+                title="Mediodía Cenit (12:00 h)"
+              >
+                <Sun size={12} />
+                <span>12:00</span>
+              </button>
+              <button
+                className={`quick-time-btn ${Math.abs(params.hourOfDay - 18) < 0.5 ? 'active' : ''}`}
+                onClick={() => onUpdateParams({ hourOfDay: 18 })}
+                title="Atardecer (18:00 h)"
+              >
+                <Sunset size={12} />
+                <span>18:00</span>
+              </button>
+              <button
+                className={`quick-time-btn ${params.hourOfDay >= 21 || params.hourOfDay <= 4 ? 'active' : ''}`}
+                onClick={() => onUpdateParams({ hourOfDay: 22 })}
+                title="Modo Noche con Ventanas Encendidas (22:00 h)"
+              >
+                <Moon size={12} />
+                <span>22:00 (Noche)</span>
+              </button>
             </div>
           </div>
 
@@ -395,7 +628,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
       <footer className="sidebar-footer">
         <p className="footer-credits">
-          Terra Urbis v1.0 • Generación Procedural para Arquitectura
+          Terra Urbis v1.1 • Visualización Arquitectónica y Urbana
         </p>
       </footer>
     </aside>

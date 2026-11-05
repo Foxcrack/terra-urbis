@@ -1,7 +1,8 @@
 /**
  * Terra Urbis - Aplicación Principal
  * Coordina el estado reactivo, la regeneración procedural desacoplada del estudio solar,
- * el tema claro/oscuro y el enlace entre la escena 3D y el panel de control.
+ * el tema claro/oscuro, el enlace entre la escena 3D y el panel de control,
+ * y el modo presentación a pantalla completa con enrutamiento por hash.
  */
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -12,7 +13,14 @@ import { generateTerrainMesh } from './lib/terrain';
 import { generateCityBuildings } from './lib/city';
 import { Scene } from './components/Scene';
 import { ControlPanel } from './components/ControlPanel';
+import { Presentation } from './presentation/Presentation';
 import './styles.css';
+
+// Detección inicial de dispositivos móviles para optimizar calidad por defecto
+const isMobileDevice =
+  typeof window !== 'undefined' &&
+  (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    window.innerWidth < 768);
 
 // Parámetros por defecto según especificación
 const DEFAULT_PARAMS: WorldParams = {
@@ -36,6 +44,10 @@ const DEFAULT_PARAMS: WorldParams = {
   hourOfDay: 15,
   showWater: true,
   showLotVolume: true,
+
+  quality: isMobileDevice ? 'baja' : 'alta',
+  contextMode: false,
+  shadowStudy: false,
 };
 
 export const App: React.FC = () => {
@@ -65,8 +77,34 @@ export const App: React.FC = () => {
     return 'dark';
   });
 
+  // Modo Presentación según hash en la URL (#/presentacion)
+  const [isPresentation, setIsPresentation] = useState<boolean>(() => {
+    return typeof window !== 'undefined' && window.location.hash.startsWith('#/presentacion');
+  });
+
+  useEffect(() => {
+    const handleHash = () => {
+      setIsPresentation(window.location.hash.startsWith('#/presentacion'));
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  const handleOpenPresentation = useCallback(() => {
+    window.location.hash = '#/presentacion/1';
+    setIsPresentation(true);
+  }, []);
+
+  const handleClosePresentation = useCallback(() => {
+    window.location.hash = '';
+    setIsPresentation(false);
+  }, []);
+
   // Presets de cámara
   const [cameraPreset, setCameraPreset] = useState<CameraPreset | null>(null);
+
+  // Disparador para captura de imagen PNG
+  const [triggerScreenshot, setTriggerScreenshot] = useState(false);
 
   // Geometría del terreno y edificios generados
   const [terrainGeo, setTerrainGeo] = useState<THREE.BufferGeometry | null>(null);
@@ -106,7 +144,7 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Parámetros que requieren regenerar geometría (excluye hourOfDay y showLotVolume)
+  // Parámetros que requieren regenerar geometría (excluye hourOfDay, showLotVolume, quality, contextMode, shadowStudy)
   const geomDependencies = [
     params.seed,
     params.terrainType,
@@ -165,6 +203,11 @@ export const App: React.FC = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
+  // Captura de imagen
+  const handleCaptureScreenshot = useCallback(() => {
+    setTriggerScreenshot(true);
+  }, []);
+
   // Aplicar tema en el elemento root del documento
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -192,17 +235,21 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-layout" data-theme={theme}>
-      {/* Visualizador 3D principal */}
+      {/* Visualizador 3D principal (se desmonta al entrar a presentación para garantizar único canvas WebGL) */}
       <main className="main-viewport" role="main">
-        <Scene
-          params={params}
-          terrainGeometry={terrainGeo}
-          waterGeometry={waterGeo}
-          metrics={metrics}
-          buildings={buildings}
-          cameraPreset={cameraPreset}
-          onCameraPresetApplied={() => setCameraPreset(null)}
-        />
+        {!isPresentation && (
+          <Scene
+            params={params}
+            terrainGeometry={terrainGeo}
+            waterGeometry={waterGeo}
+            metrics={metrics}
+            buildings={buildings}
+            cameraPreset={cameraPreset}
+            onCameraPresetApplied={() => setCameraPreset(null)}
+            triggerScreenshot={triggerScreenshot}
+            onScreenshotTaken={() => setTriggerScreenshot(false)}
+          />
+        )}
       </main>
 
       {/* Panel lateral de controles y didáctica */}
@@ -214,7 +261,14 @@ export const App: React.FC = () => {
         onUpdateParams={handleUpdateParams}
         onSelectCameraPreset={setCameraPreset}
         onRandomSeed={handleRandomSeed}
+        onCaptureScreenshot={handleCaptureScreenshot}
+        onOpenPresentation={handleOpenPresentation}
       />
+
+      {/* Presentación del Proyecto a pantalla completa */}
+      {isPresentation && (
+        <Presentation onClose={handleClosePresentation} theme={theme} />
+      )}
     </div>
   );
 };
