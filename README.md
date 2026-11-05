@@ -61,7 +61,7 @@ La versión actual incorpora mejoras gráficas de nivel profesional manteniendo 
 
 ## 📊 Módulo de Presentación del Proyecto (Pensamiento Matemático)
 
-La aplicación incluye un sistema de presentación a pantalla completa con **14 diapositivas estructuradas e interactivas**, diseñado específicamente para proyectar en el aula y sustentar el proyecto final del curso:
+La aplicación incluye un sistema de presentación a pantalla completa con **15 diapositivas estructuradas e interactivas**, diseñado específicamente para proyectar en el aula y sustentar el proyecto final del curso:
 
 ### Acceso y Enrutamiento por Hash
 - **Botón en Encabezado:** Acceso inmediato con el botón naranja **"Presentación"** en la barra superior.
@@ -69,6 +69,7 @@ La aplicación incluye un sistema de presentación a pantalla completa con **14 
   - `#/presentacion` abre la primera diapositiva.
   - `#/presentacion/3` abre directamente la diapositiva 3 (Pregunta de Investigación).
   - `#/presentacion/7` abre directamente la diapositiva 7 (Matemáticas: Semillas).
+  - `#/presentacion/11` abre directamente la diapositiva 11 (Compendio de Fórmulas Matemáticas).
   - Compatible al 100% con despliegues en **Vercel** sin necesidad de configurar reescrituras de servidor.
 - **Salir:** Botón *"Volver al Generador"* o tecla `Esc`.
 
@@ -84,13 +85,14 @@ La aplicación incluye un sistema de presentación a pantalla completa con **14 
 | **Swipe táctil** | Deslizar izquierda/derecha con el dedo en pantallas táctiles |
 | **Puntos y Flechas** | Puntos clicables y botones Anterior / Siguiente en pantalla |
 
-### Diapositivas Interactivas en Vivo
+### Diapositivas Interactivas y Compendio Matemático
 1. **Slide 1 — Portada:** Generador 3D en vivo con órbita automática girando suavemente de fondo.
 2. **Slide 7 — Semillas:** Input interactivo para probar distintas semillas y verificar que la misma semilla reproduce exactamente el mismo mundo.
-3. **Slide 8 — Ruido de Perlin:** Gráfica interactiva 1D que compara visualmente el ruido blanco, la interpolación lineal y el suavizado cuíntico de Perlin ($6t^5 - 15t^4 + 10t^3$).
+3. **Slide 8 — Ruido de Perlin:** Gráfica interactiva 1D y renderizado tipográfico con **KaTeX** de la función cuíntica $f(t) = 6t^5 - 15t^4 + 10t^3$ y sus derivadas de frontera ($C^2$).
 4. **Slide 9 — Fractales (fBm):** Control deslizante de octavas (1 a 6) conectado simultáneamente a un mapa de alturas 2D en escala de grises y a la malla 3D en tiempo real.
 5. **Slide 10 — Ciudad y Lote:** Control deslizante de hora solar para observar el movimiento de sombras arrojadas por el lote sobre las calles.
-6. **Slide 14 — Cierre:** Generador de código QR client-side (sin servicios externos) que permite a la audiencia escanear y abrir la app en sus dispositivos móviles.
+6. **Slide 11 — Compendio Matemático:** Cuadrícula de 8 fichas interactivas con todas las fórmulas aplicadas en el proyecto (PRNG, Fade $C^2$, Gradientes 2D, fBm fractal, Smoothstep sigmoide, Nivelación topográfica, Perfil radial de edificios y Trayectoria solar), su descripción matemática y su impacto directo en Terra Urbis.
+7. **Slide 15 — Cierre:** Generador de código QR client-side (sin servicios externos) que permite a la audiencia escanear y abrir la app en sus dispositivos móviles.
 
 ### Cómo Editar o Personalizar las Diapositivas (`src/presentation/slides.tsx`)
 Las diapositivas están modeladas como datos tipados en el arreglo `SLIDES` de [`slides.tsx`](file:///c:/Users/felip/OneDrive/Documentos/GitHub/terra-urbis/src/presentation/slides.tsx):

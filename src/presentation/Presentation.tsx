@@ -250,7 +250,7 @@ export const Presentation: React.FC<PresentationProps> = ({ onClose, theme }) =>
       <main className="presentation-stage">
         <div className="presentation-slide-card" key={currentSlide.id}>
           {/* Encabezado interno de diapositiva (excepto en portada y cierre) */}
-          {currentSlide.id !== 1 && currentSlide.id !== 14 && (
+          {currentIndex !== 0 && currentIndex !== SLIDES.length - 1 && (
             <div className="slide-inner-header">
               <h2 className="slide-main-title">{currentSlide.title}</h2>
               {currentSlide.subtitle && <p className="slide-sub-title">{currentSlide.subtitle}</p>}

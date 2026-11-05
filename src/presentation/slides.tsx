@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { MiniScene } from './MiniScene';
 import { PerlinNoise, sampleFBM } from '../lib/noise';
+import { MathView } from './MathView';
 
 export interface SlideData {
   id: number;
@@ -56,7 +57,7 @@ t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
 return ((t ^ (t >>> 14)) >>> 0) / 4294967296;`}
           </pre>
           <p className="math-caption">
-            Transformaciones lineales y no lineales bit a bit con periodo de \(2^{32}\) valores uniformes.
+            Transformaciones lineales y no lineales bit a bit con periodo de <MathView math="2^{32}" /> valores uniformes.
           </p>
         </div>
 
@@ -152,18 +153,18 @@ const InteractiveNoiseSlide: React.FC = () => {
     <div className="slide-split-layout">
       <div className="slide-text-pane">
         <p className="slide-lead">
-          El ruido blanco genera estática desconectada. El <strong>Ruido de Perlin</strong> (Ken Perlin, 1985) interpola gradientes con continuidad de segundo orden (\(C^2\)).
+          El ruido blanco genera estática desconectada. El <strong>Ruido de Perlin</strong> (Ken Perlin, 1985) interpola gradientes con continuidad de segundo orden (<MathView math="C^2" />).
         </p>
 
         <div className="math-formula-card">
           <div className="formula-header">Función de Suavizado Cuíntica de Perlin:</div>
           <div className="formula-math">
-            \(f(t) = 6t^5 - 15t^4 + 10t^3\)
+            <MathView math="f(t) = 6t^5 - 15t^4 + 10t^3" block />
           </div>
           <div className="formula-properties">
-            <span>✓ \(f(0) = 0, \; f(1) = 1\)</span>
-            <span>✓ Derivada primera: \(f'(0) = f'(1) = 0\)</span>
-            <span>✓ Derivada segunda: \(f''(0) = f''(1) = 0\)</span>
+            <span>✓ <MathView math="f(0) = 0, \quad f(1) = 1" /> (extremos fijos)</span>
+            <span>✓ Derivada primera: <MathView math="f'(0) = f'(1) = 0" /> (tangente horizontal)</span>
+            <span>✓ Derivada segunda: <MathView math="f''(0) = f''(1) = 0" /> (curvatura continua)</span>
           </div>
         </div>
 
@@ -187,14 +188,14 @@ const InteractiveNoiseSlide: React.FC = () => {
               onClick={() => setShowLinear(!showLinear)}
             >
               <span className="dot dot-linear" />
-              <span>Interpolación Lineal (\(C^0\))</span>
+              <span>Interpolación Lineal (<MathView math="C^0" />)</span>
             </button>
             <button
               className={`curve-toggle-btn ${showPerlin ? 'active-perlin' : ''}`}
               onClick={() => setShowPerlin(!showPerlin)}
             >
               <span className="dot dot-perlin" />
-              <span>Suavizado Cuíntico Perlin (\(C^2\))</span>
+              <span>Suavizado Cuíntico Perlin (<MathView math="C^2" />)</span>
             </button>
           </div>
         </div>
@@ -277,11 +278,14 @@ const InteractiveFractalSlide: React.FC = () => {
         <div className="math-formula-card">
           <div className="formula-header">Fórmula del Movimiento Browniano Fraccional (fBm):</div>
           <div className="formula-math">
-            {"Relieve(x, z) = ∑ [ Ruido(fᵢ · x, fᵢ · z) / 2ⁱ ]"}
+            <MathView
+              math="\text{Relieve}(x, z) = \sum_{i=0}^{N-1} \frac{\text{Ruido}(f_i \cdot x, \; f_i \cdot z)}{2^i}"
+              block
+            />
           </div>
           <div className="formula-properties">
-            <span>• <strong>Lacunaridad = 2.0:</strong> La frecuencia espacial se duplica por capa.</span>
-            <span>• <strong>Ganancia = 0.5:</strong> La amplitud vertical se reduce a la mitad.</span>
+            <span>• <strong>Lacunaridad = 2.0:</strong> La frecuencia espacial se duplica por capa (<MathView math="f_i = f_0 \cdot 2^i" />).</span>
+            <span>• <strong>Ganancia = 0.5:</strong> La amplitud vertical se reduce a la mitad (<MathView math="A_i = A_0 \cdot 0.5^i" />).</span>
           </div>
         </div>
 
@@ -341,7 +345,7 @@ const InteractiveCitySlide: React.FC = () => {
             <strong>Trama urbana ortogonal:</strong> Cuadrícula modular cada 12 m con calzadas de 4.4 m y aceras peatonales.
           </li>
           <li>
-            <strong>Decaimiento radial:</strong> Altura de edificios decreciente hacia la periferia: \(H \propto (1 - d/R)^{1.5}\).
+            <strong>Decaimiento radial:</strong> Altura de edificios decreciente hacia la periferia: <MathView math="H \propto \left(1 - \frac{d}{R}\right)^{1.5}" />.
           </li>
           <li>
             <strong>Nivelación con smoothstep:</strong> El terreno se aplana hacia la base del lote en un radio perimetral de 18 m.
@@ -392,7 +396,104 @@ const InteractiveCitySlide: React.FC = () => {
 };
 
 /**
- * Slide 14: Cierre con Código QR generado en el cliente
+ * Slide 11: Compendio de Todas las Fórmulas del Proyecto
+ */
+const FormulasCompendiumSlide: React.FC = () => {
+  const formulasData = [
+    {
+      num: '01',
+      title: 'PRNG Mulberry32',
+      category: 'Azar Determinista',
+      math: 's_{k+1} = (s_k + \\text{0x6d2b79f5}) \\pmod{2^{32}}',
+      desc: 'Generador pseudoaleatorio determinista de 32 bits con transformaciones lineales y no lineales bit a bit.',
+      usage: 'Permite que una sola semilla numérica (ej. 42089) reproduzca idéntico terreno, edificios y árboles bit a bit.',
+    },
+    {
+      num: '02',
+      title: 'Función Fade de Perlin (Cuíntica)',
+      category: 'Continuidad C²',
+      math: 'f(t) = 6t^5 - 15t^4 + 10t^3, \\quad t \\in [0, 1]',
+      desc: 'Polinomio de suavizado con derivadas primera y segunda nulas en los extremos (f\'(0)=f\'(1)=0, f\'\'(0)=f\'\'(1)=0).',
+      usage: 'Pondera la interpolación entre nodos eliminando aristas y dobleces visibles en las juntas de celda.',
+    },
+    {
+      num: '03',
+      title: 'Producto Escalar de Gradientes 2D',
+      category: 'Campo Escalar Coherente',
+      math: 'g_i(x, z) = \\vec{G}_i \\cdot (\\vec{P} - \\vec{P}_i) = G_x(x - x_i) + G_z(z - z_i)',
+      desc: 'Proyección del vector de distancia local sobre 8 vectores de gradiente directores fijos normalizados.',
+      usage: 'Asigna cotas continuas y correlacionadas en [-1, 1] a cada coordenada horizontal (x, z) del territorio.',
+    },
+    {
+      num: '04',
+      title: 'Movimiento Browniano Fraccional (fBm)',
+      category: 'Geometría Fractal',
+      math: '\\text{Relieve}(x, z) = \\sum_{i=0}^{N-1} \\frac{\\text{Ruido}(f_0 \\cdot 2^i x, \\; f_0 \\cdot 2^i z)}{2^i}',
+      desc: 'Suma armónica fractal con duplicación de frecuencia espacial (lacunaridad 2.0) y atenuación de amplitud al 50%.',
+      usage: 'Modela la autosimilitud de Mandelbrot: desde dunas suaves con 1 octava hasta cordilleras rugosas con 6 octavas.',
+    },
+    {
+      num: '05',
+      title: 'Interpolación Cúbica Smoothstep',
+      category: 'Transición Sigmoide',
+      math: 'S(t) = 3t^2 - 2t^3, \\quad t = \\text{clamp}\\left(\\frac{x - a}{b - a}, 0, 1\\right)',
+      desc: 'Curva en S con derivadas cero en los límites que efectúa transiciones sin saltos bruscos entre dos valores.',
+      usage: 'Delimita la máscara radial de la ciudad, los bordes de aceras y el contacto entre biomas de roca y pasto.',
+    },
+    {
+      num: '06',
+      title: 'Nivelación Urbana y del Lote',
+      category: 'Topografía Aplicada',
+      math: 'h_{\\text{final}} = \\text{lerp}\\big(h_{\\text{urbano}}, \\; h_{\\text{lote}}, \\; 1 - S(0, 18, d_{\\text{lote}})\\big)',
+      desc: 'Interpolación lineal ponderada hacia la cota del proyecto dentro de una franja perimetral de 18 m.',
+      usage: 'Modela el movimiento de tierras necesario para asentar la losa de cimentación y las vías urbanas.',
+    },
+    {
+      num: '07',
+      title: 'Perfil Radial de Alturas Urbanas',
+      category: 'Densidad y Skyline',
+      math: 'H(d) = H_{\\text{max}} \\cdot \\left(0.15 + 0.85\\left(1 - \\frac{d}{R}\\right)^{1.5}\\right) \\cdot r',
+      desc: 'Ley potencial decreciente en función de la distancia al centro d, modulada por dispersión aleatoria r.',
+      usage: 'Genera un centro urbano denso con torres altas y un decrecimiento armónico hacia bloques bajos periféricos.',
+    },
+    {
+      num: '08',
+      title: 'Trayectoria Solar Cenital (Heliografía)',
+      category: 'Estudio Solar y Sombras',
+      math: '\\vec{P}_{\\text{sol}}(\\alpha) = \\big(-280\\cos\\alpha, \\; 280\\sin\\alpha + 12, \\; 90\\big)',
+      desc: 'Parametrización circular del arco de elevación y azimut solar según la hora del día α(hora).',
+      usage: 'Calcula el vector de incidencia solar para proyectar sombras volumétricas dinámicas y evaluar el asoleamiento.',
+    },
+  ];
+
+  return (
+    <div className="formulas-compendium-container">
+      <div className="formulas-compendium-grid">
+        {formulasData.map((item) => (
+          <div key={item.num} className="compendium-card">
+            <div className="compendium-card-header">
+              <span className="compendium-num">{item.num}</span>
+              <h4 className="compendium-title">{item.title}</h4>
+              <span className="compendium-category">{item.category}</span>
+            </div>
+
+            <div className="compendium-math">
+              <MathView math={item.math} block />
+            </div>
+
+            <p className="compendium-desc">{item.desc}</p>
+            <p className="compendium-usage">
+              🎯 <strong>En Terra Urbis:</strong> {item.usage}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Slide 15: Cierre con Código QR generado en el cliente
  */
 const ClosingSlide: React.FC = () => {
   const [qrUrl, setQrUrl] = useState<string>('');
@@ -557,7 +658,7 @@ export const SLIDES: SlideData[] = [
             <span>La misma semilla produce siempre el mismo resultado matemático.</span>
           </div>
           <div className="pillar-item">
-            <strong>2. Continuidad \(C^2\)</strong>
+            <strong>2. Continuidad <MathView math="C^2" /></strong>
             <span>Sin quiebres ni saltos abruptos entre puntos cercanos del espacio.</span>
           </div>
           <div className="pillar-item">
@@ -741,9 +842,19 @@ export const SLIDES: SlideData[] = [
     render: () => <InteractiveCitySlide />,
   },
 
-  // 11. Comparación con Minecraft
+  // 11. Compendio Matemático
   {
     id: 11,
+    title: 'Compendio Matemático del Proyecto',
+    subtitle: 'Las 8 fórmulas esenciales implementadas y su función en Terra Urbis',
+    badge: 'Formulario Completo',
+    notes: 'Explicar a la clase el mapa conceptual completo de las 8 fórmulas matemáticas que gobiernan Terra Urbis: desde el generador Mulberry32 a nivel de bits hasta el cálculo orbital del sol.',
+    render: () => <FormulasCompendiumSlide />,
+  },
+
+  // 12. Comparación con Minecraft
+  {
+    id: 12,
     title: 'Comparación con Minecraft',
     subtitle: 'Generación por densidad 3D frente a mapas de elevación 2D',
     badge: 'Estudio Comparativo',
@@ -756,7 +867,7 @@ export const SLIDES: SlideData[] = [
             <h3>Ruido Volumétrico 3D</h3>
           </div>
           <ul className="compare-features">
-            <li><strong>Espacio tridimensional:</strong> Muestrea ruido en coordenadas (x, y, z). Si Densidad(x, y, z) &gt; 0 se coloca un bloque.</li>
+            <li><strong>Espacio tridimensional:</strong> Muestrea ruido en coordenadas <MathView math="(x, y, z)" />. Si <MathView math="\text{Densidad}(x, y, z) > 0" /> se coloca un bloque.</li>
             <li><strong>Topología compleja:</strong> Permite cuevas subterráneas, túneles, arcos de piedra y voladizos flotantes.</li>
             <li><strong>Biomas climáticos:</strong> Combina mapas de temperatura, humedad, continentalidad y erosión para determinar el bioma.</li>
             <li><strong>Costo computacional:</strong> Requiere generar y almacenar millones de bloques discretos organizados en *chunks*.</li>
@@ -772,7 +883,7 @@ export const SLIDES: SlideData[] = [
             <h3>Mapa de Alturas 2D + Ciudad</h3>
           </div>
           <ul className="compare-features">
-            <li><strong>Función continua 2D:</strong> La cota vertical es función directa de la posición: \(y = f(x, z)\).</li>
+            <li><strong>Función continua 2D:</strong> La cota vertical es función directa de la posición: <MathView math="y = f(x, z)" />.</li>
             <li><strong>Optimizado para arquitectura:</strong> Sin huecos invertidos, ideal para nivelación de explanadas y estudios de asoleamiento.</li>
             <li><strong>Trama urbana paramétrica:</strong> Reglas ortogonales integradas para calzadas, aceras y distribución de edificios.</li>
             <li><strong>Rendimiento en navegador:</strong> Renderizado instantáneo a 60 FPS en mallas continuas con InstancedMesh.</li>
@@ -785,9 +896,9 @@ export const SLIDES: SlideData[] = [
     ),
   },
 
-  // 12. Usos y aplicaciones
+  // 13. Usos y aplicaciones
   {
-    id: 12,
+    id: 13,
     title: 'Usos Profesionales y Aplicaciones',
     subtitle: 'Valor aplicado para la toma de decisiones en obra y logística',
     badge: 'Impacto Práctico',
@@ -829,9 +940,9 @@ export const SLIDES: SlideData[] = [
     ),
   },
 
-  // 13. Fuentes
+  // 14. Fuentes
   {
-    id: 13,
+    id: 14,
     title: 'Fuentes y Bibliografía',
     subtitle: 'Rigor científico y referencias seminales de la literatura',
     badge: 'Referencias',
@@ -901,9 +1012,9 @@ export const SLIDES: SlideData[] = [
     ),
   },
 
-  // 14. Cierre
+  // 15. Cierre
   {
-    id: 14,
+    id: 15,
     title: 'Cierre y Conclusiones',
     subtitle: 'Código QR y acceso directo a la aplicación web interactiva',
     badge: 'Agradecimientos',
